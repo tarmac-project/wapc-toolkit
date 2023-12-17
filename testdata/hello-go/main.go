@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-  // Register the functions that can be called from the host
-  // multiple functions can be registered at once.
+	// Register the functions that can be called from the host
+	// multiple functions can be registered at once.
 	wapc.RegisterFunctions(wapc.Functions{
 		"example": Example,
 	})

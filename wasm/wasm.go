@@ -162,7 +162,7 @@ func (s *Server) Module(key string) (*Module, error) {
 }
 
 // Run will fetch an instance from the module pool and execute it.
-func (m *Module) Run(handler string, payload []byte) ([]byte, error) {
+func (m *Module) Run(function string, payload []byte) ([]byte, error) {
 	var r []byte
 	i, err := m.pool.Get(time.Duration(DefaultPoolTimeout * time.Second))
 	if err != nil {
@@ -176,7 +176,7 @@ func (m *Module) Run(handler string, payload []byte) ([]byte, error) {
 		}
 	}()
 
-	r, err = i.Invoke(m.ctx, handler, payload)
+	r, err = i.Invoke(m.ctx, function, payload)
 	if err != nil {
 		return r, fmt.Errorf("invocation of WASM module failed - %s", err)
 	}
