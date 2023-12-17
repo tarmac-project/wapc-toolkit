@@ -1,5 +1,5 @@
-module github.com/tarmac-project/tarmac/example/toolkit/wasm
+module github.com/tarmac-project/wapc-toolkit/testdata/hello-go
 
-go 1.20
+go 1.21
 
 require github.com/wapc/wapc-guest-tinygo v0.3.3
