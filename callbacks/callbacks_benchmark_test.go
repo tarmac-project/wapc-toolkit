@@ -6,12 +6,17 @@ import (
 )
 
 func BenchmarkCallback(b *testing.B) {
-	router := New(Config{})
+	router := New(RouterConfig{})
 	counter := &Counter{}
 
-	router.RegisterCallback("counter", "++", func([]byte) ([]byte, error) {
-		counter.Increment()
-		return []byte(""), nil
+	router.RegisterCallback(CallbackConfig{
+		Namespace:  "default",
+		Capability: "counter",
+		Operation:  "++",
+		Func: func([]byte) ([]byte, error) {
+			counter.Increment()
+			return []byte(""), nil
+		},
 	})
 
 	for i := 0; i < b.N; i++ {

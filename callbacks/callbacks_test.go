@@ -2,7 +2,6 @@ package callbacks
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -25,127 +24,115 @@ func (c *Counter) Value() int {
 	return c.count
 }
 
-func TestCallbacksDefaults(t *testing.T) {
-	router := New(Config{})
-	counter := &Counter{}
+func TestRouter(t *testing.T) {
+	// Track the number of times the callback is called
+	callbackCounter := &Counter{}
 
-	t.Run("Add New Callback", func(t *testing.T) {
-		router.RegisterCallback("counter", "++", func([]byte) ([]byte, error) {
-			counter.Increment()
-			return []byte(""), nil
-		})
+	// Track the number of times the prefunc is called
+	prefuncCounter := &Counter{}
+
+	// Track the number of times the postfunc is called
+	postfuncCounter := &Counter{}
+
+	// Create a new router
+	router := New(RouterConfig{
+		PreFunc: func(_ CallbackRequest) ([]byte, error) {
+			prefuncCounter.Increment()
+			return nil, nil
+		},
+		PostFunc: func(_ CallbackResult) {
+			postfuncCounter.Increment()
+		},
 	})
 
-	t.Run("Call Callback", func(t *testing.T) {
-		_, err := router.Callback(context.Background(), "default", "counter", "++", []byte(""))
+	// Define a callback
+	cbCfg := CallbackConfig{
+		Namespace:  "default",
+		Capability: "counter",
+		Operation:  "increment",
+		Func: func(data []byte) ([]byte, error) {
+			callbackCounter.Increment()
+			return nil, nil
+		},
+	}
+
+	t.Run("Register Callback", func(t *testing.T) {
+		err := router.RegisterCallback(cbCfg)
 		if err != nil {
-			t.Errorf("Unexpected error when calling Callback function for registered callback - %s", err)
+			t.Fatalf("Unexpected error registering callback: %s", err)
 		}
 
-		if counter.Value() != 1 {
-			t.Errorf("Counter was not called")
-		}
-	})
-}
-
-func TestCallbacks(t *testing.T) {
-	postCount := &Counter{}
-	router := New(Config{
-		PreFunc: func(namespace, op string, b []byte) ([]byte, error) {
-			if namespace == "badfunc" {
-				return []byte(""), fmt.Errorf("Forced Error")
+		t.Run("Lookup Callback", func(t *testing.T) {
+			cb, err := router.Lookup("default", "counter", "increment")
+			if err != nil {
+				t.Fatalf("Unexpected error looking up callback: %s", err)
 			}
-			return []byte(""), nil
-		},
-		PostFunc: func(CallbackResult) {
-			postCount.Increment()
-		},
-	})
-	counter := &Counter{}
-	ctx, cancel := context.WithCancel(context.Background())
 
-	t.Run("Add New Callback", func(t *testing.T) {
-		router.RegisterCallback("counter", "++", func([]byte) ([]byte, error) {
-			counter.Increment()
-			return []byte(""), nil
+			if cb.Namespace != cbCfg.Namespace {
+				t.Errorf("Unexpected namespace: %s", cb.Namespace)
+			}
 		})
 	})
 
-	t.Run("Call Callback", func(t *testing.T) {
-		_, err := router.Callback(ctx, "default", "counter", "++", []byte(""))
+	t.Run("Callback", func(t *testing.T) {
+		_, err := router.Callback(context.Background(), "default", "counter", "increment", []byte(""))
 		if err != nil {
-			t.Errorf("Unexpected error when calling Callback function for registered callback - %s", err)
+			t.Errorf("Unexpected error calling callback: %s", err)
 		}
 
-		if counter.Value() != 1 {
-			t.Errorf("Counter was not called")
-		}
+		t.Run("Validate Callback Execution", func(t *testing.T) {
+			if callbackCounter.Value() != 1 {
+				t.Errorf("Unexpected callback count: %d, expected: 1", callbackCounter.Value())
+			}
+		})
+
+		t.Run("Validate PreFunc Execution", func(t *testing.T) {
+			if prefuncCounter.Value() != 1 {
+				t.Errorf("Unexpected prefunc count: %d, expected: 1", prefuncCounter.Value())
+			}
+		})
+
+		t.Run("Validate PostFunc Execution", func(t *testing.T) {
+			if postfuncCounter.Value() != 1 {
+				t.Errorf("Unexpected postfunc count: %d, expected: 1", postfuncCounter.Value())
+			}
+		})
 	})
 
-	t.Run("Call Callback with expired context", func(t *testing.T) {
+	t.Run("Callback with Expired Context", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 		cancel()
-		_, err := router.Callback(ctx, "default", "counter", "++", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function with expired context")
-		}
-
-		if counter.Value() == 2 {
-			t.Errorf("Counter was unexpectedly called")
+		_, err := router.Callback(ctx, "default", "counter", "increment", []byte(""))
+		if err != ErrCanceled {
+			t.Errorf("Expected canceled error calling callback, got: %s", err)
 		}
 	})
 
-	t.Run("Delete Callback", func(t *testing.T) {
-		router.DelCallback("counter", "++")
-
-		_, err := router.Callback(context.Background(), "default", "counter", "++", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function after deletion")
-		}
-	})
-
-	t.Run("Empty namespace", func(t *testing.T) {
-		_, err := router.Callback(context.Background(), "default", "", "++", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function, got nil")
-		}
-	})
-
-	t.Run("Empty op", func(t *testing.T) {
-		_, err := router.Callback(context.Background(), "default", "counter", "", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function, got nil")
-		}
-	})
-
-	t.Run("Bad PreFunc Callback", func(t *testing.T) {
-		// Add a Nil Function
-		router.RegisterCallback("badfunc", "nil", nil)
-		_, err := router.Callback(ctx, "default", "badfunc", "nil", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function with nil func")
-		}
-	})
-
-	t.Run("Nil Func Callback", func(t *testing.T) {
-		// Add a Nil Function
-		router.RegisterCallback("badfunc2", "nil", nil)
-		_, err := router.Callback(ctx, "default2", "badfunc", "nil", []byte(""))
-		if err == nil {
-			t.Errorf("Expected error when calling Callback function with nil func")
-		}
-	})
-
-	t.Run("Verify PostFunc was called", func(t *testing.T) {
-		router.RegisterCallback("goodfunc1", "post", func([]byte) ([]byte, error) { return []byte(""), nil })
-		_, err := router.Callback(context.Background(), "default", "goodfunc1", "post", []byte(""))
+	t.Run("Unregister Callback", func(t *testing.T) {
+		err := router.UnregisterCallback(cbCfg)
 		if err != nil {
-			t.Errorf("Unexpected error calling good callback - %s", err)
+			t.Errorf("Unexpected error unregistering callback: %s", err)
 		}
 
-		<-time.After(time.Duration(10) * time.Second)
+		t.Run("Lookup Unregistered Callback", func(t *testing.T) {
+			_, err := router.Lookup("default", "counter", "increment")
+			if err != ErrNotFound {
+				t.Errorf("Expected notfound error looking up callback, got: %s", err)
+			}
+		})
 
-		if postCount.Value() < 1 {
-			t.Errorf("Expected post func to be called, but it was not - %d", postCount.Value())
+		t.Run("Callback expecting error", func(t *testing.T) {
+			_, err := router.Callback(context.Background(), "default", "counter", "increment", []byte(""))
+			if err != ErrNotFound {
+				t.Errorf("Expected notfound error calling callback, got: %s", err)
+			}
+		})
+	})
+
+	t.Run("Unregister an unregistered callback", func(t *testing.T) {
+		err := router.UnregisterCallback(cbCfg)
+		if err != nil {
+			t.Errorf("Unexpected error unregistering callback: %s", err)
 		}
 	})
 }
