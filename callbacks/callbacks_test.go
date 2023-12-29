@@ -26,6 +26,8 @@ func (c *Counter) Value() int {
 	return c.count
 }
 
+var ErrTestError = fmt.Errorf("test error")
+
 type RouterTestCase struct {
 	Name              string
 	RouterCfg         RouterConfig
@@ -95,14 +97,14 @@ func TestRouter(t *testing.T) {
 		{
 			Name:       "Register router with prefunc that errors",
 			RouterCfg:  RouterConfig{},
-			ErrPreFunc: fmt.Errorf("test error"),
+			ErrPreFunc: ErrTestError,
 			CallbackCfg: CallbackConfig{
 				Namespace:  "default",
 				Capability: "counter",
 				Operation:  "increment",
 			},
 			CallbackInput: []byte("Hello World"),
-			CallbackErr:   fmt.Errorf("test error"),
+			CallbackErr:   ErrTestError,
 		},
 		// Register empty callback
 		{
@@ -162,8 +164,8 @@ func TestRouter(t *testing.T) {
 				Capability: "counter",
 				Operation:  "increment",
 			},
-			CallbackErr:     fmt.Errorf("test error"),
-			ErrCallbackFunc: fmt.Errorf("test error"),
+			CallbackErr:     ErrTestError,
+			ErrCallbackFunc: ErrTestError,
 			CallbackInput:   []byte("Hello World"),
 		},
 	}

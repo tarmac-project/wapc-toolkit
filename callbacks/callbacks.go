@@ -30,13 +30,13 @@ type Router struct {
 	postFunc  func(CallbackResult)
 }
 
-func New(cfg RouterConfig) *Router {
+func New(cfg RouterConfig) (*Router, error) {
 	r := &Router{
 		callbacks: make(map[string]*Callback),
 		preFunc:   cfg.PreFunc,
 		postFunc:  cfg.PostFunc,
 	}
-	return r
+	return r, nil
 }
 
 func (r *Router) RegisterCallback(cfg CallbackConfig) error {
@@ -101,26 +101,30 @@ func (r *Router) Callback(ctx context.Context, namespace, capability, operation 
 	// Lookup callback
 	if cb, ok := r.callbacks[key]; ok {
 		// Call preFunc
-		rsp, err := r.preFunc(req)
-		if err != nil {
-			// return error to caller
-			return rsp, err
+		if r.preFunc != nil {
+			rsp, err := r.preFunc(req)
+			if err != nil {
+				// return error to caller
+				return rsp, err
+			}
 		}
 
 		// Call callback func
 		cbRsp, err := cb.Func(input)
 
 		// Call postFunc
-		go r.postFunc(CallbackResult{
-			Namespace:  namespace,
-			Capability: capability,
-			Operation:  operation,
-			Input:      input,
-			Output:     cbRsp,
-			Err:        err,
-			StartTime:  req.StartTime,
-			EndTime:    time.Now(),
-		})
+		if r.postFunc != nil {
+			go r.postFunc(CallbackResult{
+				Namespace:  namespace,
+				Capability: capability,
+				Operation:  operation,
+				Input:      input,
+				Output:     cbRsp,
+				Err:        err,
+				StartTime:  req.StartTime,
+				EndTime:    time.Now(),
+			})
+		}
 
 		// Return output and error
 		return cbRsp, err
