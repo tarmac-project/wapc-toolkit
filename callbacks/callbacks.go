@@ -40,6 +40,15 @@ func New(cfg RouterConfig) (*Router, error) {
 	return r, nil
 }
 
+func (r *Router) Close() {
+	// Lock router
+	r.Lock()
+	defer r.Unlock()
+
+	// Clear callbacks map
+	r.callbacks = make(map[string]*Callback)
+}
+
 func (r *Router) RegisterCallback(cfg CallbackConfig) error {
 	// Validate Config
 	if err := cfg.Validate(); err != nil {

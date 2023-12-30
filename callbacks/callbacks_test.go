@@ -26,6 +26,12 @@ func (c *Counter) Value() int {
 	return c.count
 }
 
+func (c *Counter) Reset() {
+	c.Lock()
+	defer c.Unlock()
+	c.count = 0
+}
+
 var ErrTestError = fmt.Errorf("test error")
 
 type RouterTestCase struct {
@@ -207,6 +213,7 @@ func TestRouter(t *testing.T) {
 				}
 				return
 			}
+			defer router.Close()
 			if err != tc.RouterErr {
 				t.Fatal("Expected error creating router")
 			}
