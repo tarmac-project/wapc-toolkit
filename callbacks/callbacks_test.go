@@ -211,6 +211,13 @@ func TestRouter(t *testing.T) {
 				t.Fatal("Expected error creating router")
 			}
 
+			t.Run("Lookup non-existent callback", func(t *testing.T) {
+				_, err := router.Lookup(tc.CallbackCfg.Namespace, tc.CallbackCfg.Capability, tc.CallbackCfg.Operation)
+				if err != ErrNotFound {
+					t.Fatalf("Unexpected error looking up callback: %s", err)
+				}
+			})
+
 			// Define a callback
 			cbCfg := tc.CallbackCfg
 			if !tc.EmptyCallbackFunc {
@@ -245,6 +252,17 @@ func TestRouter(t *testing.T) {
 					if cb.Namespace != cbCfg.Namespace {
 						t.Errorf("Unexpected namespace: %s", cb.Namespace)
 					}
+				})
+
+				t.Run("Try to Register Callback Again", func(t *testing.T) {
+					err := router.RegisterCallback(cbCfg)
+					if err != nil {
+						if err != ErrCallbackExists {
+							t.Fatalf("Unexpected error registering callback: %s", err)
+						}
+						return
+					}
+					t.Fatal("Expected error registering callback")
 				})
 
 				t.Run("Callback", func(t *testing.T) {
@@ -325,6 +343,84 @@ func TestRouter(t *testing.T) {
 					})
 				})
 			})
+		})
+	}
+}
+
+type CallbackConfigTestCase struct {
+	Name        string
+	CallbackCfg CallbackConfig
+	Err         error
+}
+
+func TestCallbackConfigValidation(t *testing.T) {
+	tt := []CallbackConfigTestCase{
+		{
+			Name: "Valid CallbackConfig",
+			CallbackCfg: CallbackConfig{
+				Namespace:  "default",
+				Capability: "counter",
+				Operation:  "increment",
+				Func: func(input []byte) ([]byte, error) {
+					return input, nil
+				},
+			},
+			Err: nil,
+		},
+		{
+			Name: "Invalid Namespace",
+			CallbackCfg: CallbackConfig{
+				Namespace:  "",
+				Capability: "counter",
+				Operation:  "increment",
+				Func: func(input []byte) ([]byte, error) {
+					return input, nil
+				},
+			},
+			Err: ErrInvalidNamespace,
+		},
+		{
+			Name: "Invalid Capability",
+			CallbackCfg: CallbackConfig{
+				Namespace:  "default",
+				Capability: "",
+				Operation:  "increment",
+				Func: func(input []byte) ([]byte, error) {
+					return input, nil
+				},
+			},
+			Err: ErrInvalidCapability,
+		},
+		{
+			Name: "Invalid Operation",
+			CallbackCfg: CallbackConfig{
+				Namespace:  "default",
+				Capability: "counter",
+				Operation:  "",
+				Func: func(input []byte) ([]byte, error) {
+					return input, nil
+				},
+			},
+			Err: ErrInvalidOperation,
+		},
+		{
+			Name: "Invalid Func",
+			CallbackCfg: CallbackConfig{
+				Namespace:  "default",
+				Capability: "counter",
+				Operation:  "increment",
+				Func:       nil,
+			},
+			Err: ErrInvalidFunc,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.Name, func(t *testing.T) {
+			err := tc.CallbackCfg.Validate()
+			if err != tc.Err {
+				t.Errorf("Unexpected error validating callback config: %s", err)
+			}
 		})
 	}
 }

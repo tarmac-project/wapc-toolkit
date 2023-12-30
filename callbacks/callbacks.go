@@ -15,6 +15,7 @@ var (
 	ErrInvalidCapability = errors.New("invalid capability")
 	ErrInvalidOperation  = errors.New("invalid operation")
 	ErrInvalidFunc       = errors.New("invalid func cannot be nil")
+	ErrCallbackExists    = errors.New("callback already exists")
 )
 
 type RouterConfig struct {
@@ -43,6 +44,11 @@ func (r *Router) RegisterCallback(cfg CallbackConfig) error {
 	// Validate Config
 	if err := cfg.Validate(); err != nil {
 		return err
+	}
+
+	// Check if callback already exists
+	if _, err := r.Lookup(cfg.Namespace, cfg.Capability, cfg.Operation); err == nil {
+		return ErrCallbackExists
 	}
 
 	// Lock router
