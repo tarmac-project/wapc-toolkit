@@ -218,6 +218,15 @@ func TestRouter(t *testing.T) {
 				}
 			})
 
+			if tc.CallbackRegErr != nil {
+				t.Run("Unregister callback with invalid config", func(t *testing.T) {
+					err := router.UnregisterCallback(tc.CallbackCfg)
+					if err != tc.CallbackRegErr {
+						t.Fatalf("Unexpected error unregistering callback: %s", err)
+					}
+				})
+			}
+
 			// Define a callback
 			cbCfg := tc.CallbackCfg
 			if !tc.EmptyCallbackFunc {
@@ -244,7 +253,7 @@ func TestRouter(t *testing.T) {
 				}
 
 				t.Run("Lookup Callback", func(t *testing.T) {
-					cb, err := router.Lookup("default", "counter", "increment")
+					cb, err := router.Lookup(cbCfg.Namespace, cbCfg.Capability, cbCfg.Operation)
 					if err != nil {
 						t.Fatalf("Unexpected error looking up callback: %s", err)
 					}
