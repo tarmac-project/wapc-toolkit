@@ -3,6 +3,7 @@ package callbacks
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"testing"
@@ -188,7 +189,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			if !tc.EmptyPreFunc {
 				routerCfg.PreFunc = func(rq CallbackRequest) ([]byte, error) {
 					// Validate input
-					if bytes.Compare(rq.Input, tc.CallbackInput) != 0 {
+					if !bytes.Equal(rq.Input, tc.CallbackInput) {
 						t.Errorf("Unexpected preFunc input: %s, expected: %s", rq.Input, tc.CallbackInput)
 					}
 					prefuncCounter.Increment()
@@ -198,7 +199,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			if !tc.EmptyPostFunc {
 				routerCfg.PostFunc = func(res CallbackResult) {
 					// Validate input
-					if bytes.Compare(res.Input, tc.CallbackInput) != 0 {
+					if !bytes.Equal(res.Input, tc.CallbackInput) {
 						t.Errorf("Unexpected postFunc input: %s, expected: %s", res.Input, tc.CallbackInput)
 					}
 					postfuncCounter.Increment()
@@ -208,19 +209,19 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			// Create a new router
 			router, err := New(routerCfg)
 			if err != nil {
-				if err != tc.RouterErr {
+				if !errors.Is(err, tc.RouterErr) {
 					t.Fatalf("Unexpected error creating router: %s", err)
 				}
 				return
 			}
 			defer router.Close()
-			if err != tc.RouterErr {
+			if !errors.Is(err, tc.RouterErr) {
 				t.Fatal("Expected error creating router")
 			}
 
 			t.Run("Lookup non-existent callback", func(t *testing.T) {
 				_, err := router.Lookup(tc.CallbackCfg.Namespace, tc.CallbackCfg.Capability, tc.CallbackCfg.Operation)
-				if err != ErrNotFound {
+				if !errors.Is(err, ErrNotFound) {
 					t.Fatalf("Unexpected error looking up callback: %s", err)
 				}
 			})
@@ -228,7 +229,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			if tc.CallbackRegErr != nil {
 				t.Run("Unregister callback with invalid config", func(t *testing.T) {
 					err := router.UnregisterCallback(tc.CallbackCfg)
-					if err != tc.CallbackRegErr {
+					if !errors.Is(err, tc.CallbackRegErr) {
 						t.Fatalf("Unexpected error unregistering callback: %s", err)
 					}
 				})
@@ -239,7 +240,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			if !tc.EmptyCallbackFunc {
 				cbCfg.Func = func(input []byte) ([]byte, error) {
 					// Validate input
-					if bytes.Compare(input, tc.CallbackInput) != 0 {
+					if !bytes.Equal(input, tc.CallbackInput) {
 						t.Errorf("Unexpected callback input: %s, expected: %s", input, tc.CallbackInput)
 					}
 					callbackCounter.Increment()
@@ -250,12 +251,12 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 			t.Run("Register Callback", func(t *testing.T) {
 				err := router.RegisterCallback(cbCfg)
 				if err != nil {
-					if err != tc.CallbackRegErr {
+					if !errors.Is(err, tc.CallbackRegErr) {
 						t.Fatalf("Unexpected error registering callback: %s", err)
 					}
 					return
 				}
-				if err != tc.CallbackRegErr {
+				if !errors.Is(err, tc.CallbackRegErr) {
 					t.Fatal("Expected error registering callback")
 				}
 
@@ -273,7 +274,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 				t.Run("Try to Register Callback Again", func(t *testing.T) {
 					err := router.RegisterCallback(cbCfg)
 					if err != nil {
-						if err != ErrCallbackExists {
+						if !errors.Is(err, ErrCallbackExists) {
 							t.Fatalf("Unexpected error registering callback: %s", err)
 						}
 						return
@@ -288,16 +289,16 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 						tc.CallbackCfg.Operation,
 						tc.CallbackInput)
 					if err != nil {
-						if err != tc.CallbackErr {
+						if !errors.Is(err, tc.CallbackErr) {
 							t.Fatalf("Unexpected error calling callback: %s", err)
 						}
 						return
 					}
-					if err != tc.CallbackErr {
+					if !errors.Is(err, tc.CallbackErr) {
 						t.Fatal("Expected error calling callback")
 					}
 
-					if bytes.Compare(rsp, tc.CallbackInput) != 0 {
+					if !bytes.Equal(rsp, tc.CallbackInput) {
 						t.Errorf("Unexpected callback response: %s, expected: %s", rsp, tc.CallbackInput)
 					}
 
@@ -326,7 +327,7 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 					ctx, cancel := context.WithCancel(context.Background())
 					cancel()
 					_, err := router.Callback(ctx, "default", "counter", "increment", []byte(""))
-					if err != ErrCanceled {
+					if !errors.Is(err, ErrCanceled) {
 						t.Errorf("Expected canceled error calling callback, got: %s", err)
 					}
 				})
@@ -339,14 +340,14 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 
 					t.Run("Lookup Unregistered Callback", func(t *testing.T) {
 						_, err := router.Lookup("default", "counter", "increment")
-						if err != ErrNotFound {
+						if !errors.Is(err, ErrNotFound) {
 							t.Errorf("Expected notfound error looking up callback, got: %s", err)
 						}
 					})
 
 					t.Run("Callback expecting error", func(t *testing.T) {
 						_, err := router.Callback(context.Background(), "default", "counter", "increment", []byte(""))
-						if err != ErrNotFound {
+						if !errors.Is(err, ErrNotFound) {
 							t.Errorf("Expected notfound error calling callback, got: %s", err)
 						}
 					})

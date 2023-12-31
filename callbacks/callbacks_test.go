@@ -1,6 +1,7 @@
 package callbacks
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -75,7 +76,7 @@ func TestCallbackConfigValidation(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.Name, func(t *testing.T) {
 			err := tc.CallbackCfg.Validate()
-			if err != tc.Err {
+			if !errors.Is(err, tc.Err) {
 				t.Errorf("Unexpected error validating callback config: %s", err)
 			}
 		})
