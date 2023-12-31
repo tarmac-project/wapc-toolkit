@@ -363,3 +363,35 @@ func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test functio
 		})
 	}
 }
+
+func ExampleNew() {
+	// Create a new router
+	router, err := New(RouterConfig{})
+	if err != nil {
+		fmt.Printf("Unexpected error creating router: %s", err)
+	}
+	defer router.Close()
+
+	// Create a callback
+	cb := CallbackConfig{
+		Namespace:  "example",
+		Capability: "greeting",
+		Operation:  "hello",
+		Func: func(input []byte) ([]byte, error) {
+			fmt.Println("Hello World!")
+			return []byte(""), nil
+		},
+	}
+
+	// Register the callback with the router
+	err = router.RegisterCallback(cb)
+	if err != nil {
+		fmt.Printf("Unexpected error registering callback: %s", err)
+	}
+
+	// Call the callback
+	_, err = router.Callback(context.Background(), "example", "greeting", "hello", []byte(""))
+	if err != nil {
+		fmt.Printf("Unexpected error calling callback: %s", err)
+	}
+}
