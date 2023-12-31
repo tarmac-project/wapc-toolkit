@@ -15,7 +15,7 @@ type BencharkRouterCase struct {
 	NumCallbacks int
 }
 
-func BenchmarkRouter(b *testing.B) {
+func BenchmarkRouter(b *testing.B) { //nolint:gocognit // Benchmark test using complex set of table tests
 	tt := []BencharkRouterCase{
 		{
 			Name:      "1 Callback",

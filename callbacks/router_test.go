@@ -49,7 +49,7 @@ type RouterTestCase struct {
 	CallbackInput     []byte
 }
 
-func TestRouter(t *testing.T) {
+func TestRouter(t *testing.T) { //nolint:gocyclo,gocognit,cyclop // Test function using a complex set of table tests
 	tt := []RouterTestCase{
 		// Happy path
 		{

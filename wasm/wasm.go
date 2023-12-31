@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	wapc "github.com/wapc/wapc-go"
 	"github.com/wapc/wapc-go/engines/wazero"
 )
 
