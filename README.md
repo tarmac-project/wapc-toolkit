@@ -36,7 +36,7 @@ What could we use this toolkit for? Here are some thoughts.
 
 ## Getting Started
 
-The toolkit is a collection of packages that you can import and use independently.
+The toolkit is a collection of packages you can import and use independently.
 
 The following shows an example of leveraging the engine to load and execute a waPC guest module.
 
@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// Lookup the guest module.
-	m, err := server.Lookup("my-guest-module")
+	m, err := server.Module("my-guest-module")
 	if err != nil {
 		// do something
 	}
