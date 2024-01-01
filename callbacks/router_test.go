@@ -394,4 +394,6 @@ func ExampleNew() {
 	if err != nil {
 		fmt.Printf("Unexpected error calling callback: %s", err)
 	}
+
+	// Output: Hello World!
 }
