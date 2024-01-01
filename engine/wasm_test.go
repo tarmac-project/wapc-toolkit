@@ -1,4 +1,4 @@
-package wasm
+package engine
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestWASMServerCreation(t *testing.T) {
-	_, err := NewServer(Config{})
+	_, err := New(ServerConfig{})
 	if err == nil {
 		t.Errorf("New Server creation should have errored with no Callback")
 	}
@@ -20,13 +20,13 @@ type ModuleCase struct {
 }
 
 func TestWASMModuleCreation(t *testing.T) {
-	s, err := NewServer(Config{
+	s, err := New(ServerConfig{
 		Callback: func(context.Context, string, string, string, []byte) ([]byte, error) { return []byte(""), nil },
 	})
 	if err != nil {
 		t.Errorf("Failed to create WASM Server - %s", err)
 	}
-	defer s.Shutdown()
+	defer s.Close()
 
 	var mc []ModuleCase
 
@@ -106,7 +106,7 @@ func TestWASMModuleCreation(t *testing.T) {
 
 func TestWASMExecution(t *testing.T) {
 	callbackCh := make(chan struct{}, 2)
-	s, err := NewServer(Config{
+	s, err := New(ServerConfig{
 		Callback: func(context.Context, string, string, string, []byte) ([]byte, error) {
 			callbackCh <- struct{}{}
 			return []byte(""), nil
@@ -115,7 +115,7 @@ func TestWASMExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create WASM Server - %s", err)
 	}
-	defer s.Shutdown()
+	defer s.Close()
 
 	err = s.LoadModule(ModuleConfig{
 		Name:     "AModule",

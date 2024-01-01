@@ -3,9 +3,9 @@ Package callbacks provides a callback router as part of the wapc-toolkit; users 
 package with other packages in the toolkit or directly with the github.com/wapc/wapc-go package.
 
 The wapc-toolkit is a collection of packages focused on providing tools for Go applications using
-the Web Assembly Procedure Calls (waPC) standard. The waPC standard is used by host and module
-applications to communicate. The go implementation github.com/wapc/wapc-go offers multiple host
-runtimes supporting the Web Assembly System Interface (WASI) and an SDK for guest modules.
+the WebAssembly Procedure Calls (waPC) standard. The waPC standard is used by host and module
+applications to communicate. The Go implementation github.com/wapc/wapc-go offers multiple host
+runtimes supporting the WebAssembly System Interface (WASI) and an SDK for guest modules.
 
 The Go waPC package allows modules to perform callbacks to hosts via a hostcall function.
 When a host initiates the waPC engine, it can register a single function to handle these host calls.
