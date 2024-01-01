@@ -92,7 +92,7 @@ func (m *Module) Run(function string, payload []byte) ([]byte, error) {
 	// Invoke the module with the user-provided function and payload
 	r, err = i.Invoke(m.ctx, function, payload)
 	if err != nil {
-		return r, fmt.Errorf("invocation of WASM module failed - %w", err)
+		return r, err
 	}
 
 	return r, nil

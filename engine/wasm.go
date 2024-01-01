@@ -2,9 +2,9 @@
 Package engine is part of the wapc-toolkit and provides a simplified interface for loading and executing waPC guest
 modules.
 
-The wapc-toolkit is a collection of packages focused on providing tools for Go applications using the Web Assembly
+The wapc-toolkit is a collection of packages focused on providing tools for Go applications using the WebAssembly
 Procedure Calls (waPC) standard. The waPC standard is used by host and module applications to communicate. The
-Go implementation github.com/wapc/wapc-go offers multiple host runtimes supporting the Web Assembly System
+Go implementation github.com/wapc/wapc-go offers multiple host runtimes supporting the WebAssembly System
 Interface (WASI) and an SDK for guest modules.
 
 This package aims to provide a simplified WebAssembly Engine Server that implements the waPC protocol. Under
