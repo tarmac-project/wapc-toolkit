@@ -61,6 +61,17 @@ func TestWASMModuleCreation(t *testing.T) {
 		},
 	})
 
+	// Negative Pool Size
+	mc = append(mc, ModuleCase{
+		Name: "Negative Pool Size",
+		Pass: true,
+		ModuleConf: ModuleConfig{
+			Name:     "A Module",
+			PoolSize: -1,
+			Filepath: "../testdata/hello-go/hello.wasm",
+		},
+	})
+
 	// No File
 	mc = append(mc, ModuleCase{
 		Name: "No File",
