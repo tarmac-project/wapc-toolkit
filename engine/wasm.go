@@ -101,9 +101,9 @@ func (s *Server) LoadModule(cfg ModuleConfig) error {
 	m.ctx, m.cancel = context.WithCancel(context.Background())
 
 	// Set Pool Size
-	m.poolSize = uint64(cfg.PoolSize)
-	if cfg.PoolSize == 0 {
-		m.poolSize = uint64(DefaultPoolSize)
+	m.poolSize = uint64(DefaultPoolSize)
+	if cfg.PoolSize > 0 {
+		m.poolSize = uint64(cfg.PoolSize)
 	}
 
 	// Read the WASM module file
