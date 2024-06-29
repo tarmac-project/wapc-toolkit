@@ -33,7 +33,7 @@ func (c *Counter) Reset() {
 	c.count = 0
 }
 
-var ErrTestError = fmt.Errorf("test error")
+var ErrTestError = errors.New("test error")
 
 type RouterTestCase struct {
 	Name              string
@@ -377,7 +377,7 @@ func ExampleNew() {
 		Namespace:  "example",
 		Capability: "greeting",
 		Operation:  "hello",
-		Func: func(input []byte) ([]byte, error) {
+		Func: func(_ []byte) ([]byte, error) {
 			fmt.Println("Hello World!")
 			return []byte(""), nil
 		},
