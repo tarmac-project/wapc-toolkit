@@ -20,6 +20,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -30,7 +31,10 @@ import (
 
 var (
 	// ErrModuleNotFound is returned when a module is not found.
-	ErrModuleNotFound = fmt.Errorf("module not found")
+	ErrModuleNotFound = errors.New("module not found")
+
+	// ErrCallbackNil is returned when the callback function is nil.
+	ErrCallbackNil = errors.New("callback cannot be nil")
 )
 
 // ServerConfig is used to configure the initial Server.
@@ -65,7 +69,7 @@ func New(cfg ServerConfig) (*Server, error) {
 	s.modules = make(map[string]*Module)
 
 	if cfg.Callback == nil {
-		return s, fmt.Errorf("callback cannot be nil")
+		return s, ErrCallbackNil
 	}
 
 	s.callback = cfg.Callback

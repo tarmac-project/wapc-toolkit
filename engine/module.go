@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 
 var (
 	// ErrInvalidModuleConfig is returned when a ModuleConfig is invalid.
-	ErrInvalidModuleConfig = fmt.Errorf("invalid module config")
+	ErrInvalidModuleConfig = errors.New("invalid module config")
 )
 
 const (
