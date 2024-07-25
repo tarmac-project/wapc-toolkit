@@ -1,4 +1,4 @@
-module github.com/tarmac-project/wapc-toolkit
+module github.com/tarmac-project/wapc-toolkit/engine
 
 go 1.21.4
 
