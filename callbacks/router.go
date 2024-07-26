@@ -12,6 +12,37 @@ When a host initiates the waPC engine, it can register a single function to hand
 The callbacks package provides a router that can be registered with the waPC engine. It enables
 routing host calls based on the Namespace, Capability, and Operation specified by the guest module.
 Hosts can extend many different capabilities to guest modules with the callback router.
+
+Usage:
+
+	// Create a new router
+	router, err := New(RouterConfig{})
+	if err != nil {
+		// do something
+	}
+	defer router.Close()
+
+	// Register the callback with the router
+	err = router.RegisterCallback(CallbackConfig{
+		Namespace:  "example",
+		Capability: "greeting",
+		Operation:  "hello",
+		Func: func(_ []byte) ([]byte, error) {
+			fmt.Println("Hello World!")
+			return []byte(""), nil
+		},
+	})
+	if err != nil {
+		// do something
+	}
+
+	// Register router with waPC engine
+	engine, err = engine.New(engine.ServerConfig{
+		Callback: router.Callback,
+	})
+	if err != nil {
+		// do something
+	}
 */
 package callbacks
 
