@@ -2,7 +2,9 @@ build:
 	$(MAKE) -C testdata/hello-go build
 
 tests: build
-	go test -race -v -covermode=atomic -coverprofile=coverage.out ./...
+	$(MAKE) -C callbacks tests
+	$(MAKE) -C engine tests
 
 benchmarks: build
-	go test -bench=. -benchmem ./...
+	$(MAKE) -C callbacks benchmarks
+	$(MAKE) -C engine benchmarks

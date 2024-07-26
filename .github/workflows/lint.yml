@@ -4,13 +4,29 @@ on:
     tags:
       - v*
     branches:
-      - actions
       - main
   pull_request:
 jobs:
+  generate-matrix:
+    name: Generate matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          MODULES=$(find . -type f -name "go.mod" | sed -e 's/\/go.mod//g' | jq -R -s -c 'split("\n")[:-1]')
+          echo "matrix=${MODULES}" >> $GITHUB_OUTPUT
   golangci:
     name: golangci
+    needs: generate-matrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        modules: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
     steps:
       - uses: actions/setup-go@v3
         with:
@@ -23,10 +39,10 @@ jobs:
           version: latest
 
           # Optional: working directory, useful for monorepos
-          # working-directory: somedir
+          working-directory: ${{ matrix.modules }}
 
           # Optional: golangci-lint command line arguments.
-          args: -E misspell -E revive -E bodyclose -E errname -E gofmt --timeout=5m
+          args: -E misspell -E revive -E gochecknoinits	-E gofmt -E errname -c ${{ env.GITHUB_WORKSPACE }}/golangci.yml
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true
