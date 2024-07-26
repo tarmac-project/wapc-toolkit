@@ -43,7 +43,6 @@ Usage:
 	if err != nil {
 		// do something
 	}
-
 */
 package callbacks
 

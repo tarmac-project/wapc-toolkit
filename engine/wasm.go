@@ -16,20 +16,19 @@ Use this package if you have a Go application and want to enable extended functi
 Examples of use cases could be stored procedures within a database, serverless functions, or
 language-agnostic plugins.
 
-
 Usage:
 
 	import (
 		"github.com/tarmac-project/wapc-toolkit/engine"
 	)
-	
+
 	func main() {
 		// Create a new engine server.
 		server, err := engine.New(ServerConfig{})
 		if err != nil {
 			// do something
 		}
-	
+
 		// Load the guest module.
 		err = server.LoadModule(engine.ModuleConfig{
 			Name:     "my-guest-module",
@@ -38,20 +37,19 @@ Usage:
 		if err != nil {
 			// do something
 		}
-	
+
 		// Lookup the guest module.
 		m, err := server.Module("my-guest-module")
 		if err != nil {
 			// do something
 		}
-	
+
 		// Call the Hello function within the guest module.
 		rsp, err := m.Run("Hello", []byte("world"))
 		if err != nil {
 			// do something
 		}
 	}
-
 */
 package engine
 
