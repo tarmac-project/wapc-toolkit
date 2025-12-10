@@ -117,7 +117,10 @@ func (s *Server) Close() {
 	defer s.RUnlock()
 	for _, m := range s.modules {
 		defer m.cancel()
-		defer m.module.Close(m.ctx)
+		defer func(mod *Module) {
+			// Intentionally drop close errors; nothing meaningful to do here.
+			_ = mod.module.Close(mod.ctx)
+		}(m)
 		defer m.pool.Close(m.ctx)
 	}
 }

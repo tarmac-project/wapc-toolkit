@@ -75,26 +75,25 @@ type Module struct {
 //
 // Upon completion, Run will add the module back to the available pool.
 func (m *Module) Run(function string, payload []byte) ([]byte, error) {
-	var r []byte
+	var rsp []byte
 	// Get a module instance from the pool
 	i, err := m.pool.Get(DefaultPoolTimeout * time.Second)
 	if err != nil {
-		return r, fmt.Errorf("could not fetch module from pool - %w", err)
+		return rsp, fmt.Errorf("could not fetch module from pool - %w", err)
 	}
 
 	// Return the module to the pool
 	defer func() {
-		err := m.pool.Return(i) //nolint:govet // Ignore govet warning about shadowing err as it is not shadowed.
-		if err != nil {
-			defer i.Close(m.ctx)
+		if e := m.pool.Return(i); e != nil {
+			_ = i.Close(m.ctx)
 		}
 	}()
 
 	// Invoke the module with the user-provided function and payload
-	r, err = i.Invoke(m.ctx, function, payload)
+	rsp, err = i.Invoke(m.ctx, function, payload)
 	if err != nil {
-		return r, err
+		return rsp, err
 	}
 
-	return r, nil
+	return rsp, nil
 }

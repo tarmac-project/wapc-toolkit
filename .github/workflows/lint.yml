@@ -1,4 +1,7 @@
 name: lint
+permissions:
+  contents: read
+
 on:
   push:
     tags:
@@ -6,28 +9,20 @@ on:
     branches:
       - main
   pull_request:
-
 jobs:
   generate-matrix:
     name: Generate matrix
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      golangci_cfg_path: ${{ steps.find-golangci-cfg-path.outputs.golangci_cfg_path }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set matrix
         id: set-matrix
         run: |
-          MODULES=$(find . -type f -name "go.mod" | sed -e 's/\/go.mod//g' | jq -R -s -c 'split("\n")[:-1]')
+          MODULES=$(find . -type f -name "go.mod" | sed -e 's#/go.mod##g' | jq -R -s -c 'split("\n")[:-1]')
           echo "matrix=${MODULES}" >> $GITHUB_OUTPUT
-      - name: Find golangci.yml path
-        id: find-golangci-cfg-path
-        run: |
-          GOLANGCI_CFG_PATH=$(find $GITHUB_WORKSPACE -type f -name ".golangci.yml" | head -n 1)
-          echo "golangci_cfg_path=${GOLANGCI_CFG_PATH}" >> $GITHUB_OUTPUT
-
   golangci:
     name: golangci
     needs: generate-matrix
@@ -36,14 +31,12 @@ jobs:
       matrix:
         modules: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v6
         with:
-          go-version: '1.21'
-      - uses: actions/checkout@v3
+          go-version: '1.25'
+      - uses: actions/checkout@v5
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           working-directory: ${{ matrix.modules }}
-          args: -E misspell -E revive -E gochecknoinits -E gofmt -E errname -c ${{ needs.generate-matrix.outputs.golangci_cfg_path }}
-
