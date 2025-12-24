@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tetratelabs/wazero/sys"
 	wapc "github.com/wapc/wapc-go"
 )
 
@@ -92,8 +93,22 @@ func (m *Module) Run(function string, payload []byte) ([]byte, error) {
 	// Invoke the module with the user-provided function and payload
 	rsp, err = i.Invoke(m.ctx, function, payload)
 	if err != nil {
+		if ignoreModuleExitCodeZero(err) {
+			return rsp, nil
+		}
 		return rsp, err
 	}
 
 	return rsp, nil
+}
+
+// ignoreModuleExitCodeZero returns true when err is caused by a wasm module exiting with
+// exit code 0. These errors bubble up from the waPC runtime despite the execution being
+// successful, so we suppress them for callers.
+func ignoreModuleExitCodeZero(err error) bool {
+	var exitErr *sys.ExitError
+	if errors.As(err, &exitErr) {
+		return exitErr.ExitCode() == 0
+	}
+	return false
 }
